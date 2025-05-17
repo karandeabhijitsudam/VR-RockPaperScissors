@@ -1,4 +1,5 @@
 using UnityEngine;
+using UnityEngine.UI;
 using TMPro;
 
 public class GameManager : MonoBehaviour
@@ -20,16 +21,64 @@ public class GameManager : MonoBehaviour
     public GameObject aiPaperImage;
     public GameObject aiScissorsImage;
 
+    [Header("Spin Animation")]
+    public Image playerSpinDisplay;
+    public Image aiSpinDisplay;
+
+    public Sprite rockSprite;
+    public Sprite paperSprite;
+    public Sprite scissorsSprite;
+
+    public GameObject playAgainButton;
+
+    private Sprite[] gestureSprites;
+    private bool isSpinning = true;
+    private float spinTimer = 0f;
+    private float spinSpeed = 0.05f;
+    private bool canPlay = true;
+
+
+    void Start()
+    {
+        gestureSprites = new Sprite[] { rockSprite, paperSprite, scissorsSprite };
+        //ResetGame(); // optional
+    }
 
     void Update()
     {
-        if (Input.GetKeyDown(KeyCode.Alpha1)) MakeMove(Move.Rock);
-        if (Input.GetKeyDown(KeyCode.Alpha2)) MakeMove(Move.Paper);
-        if (Input.GetKeyDown(KeyCode.Alpha3)) MakeMove(Move.Scissors);
+        if (canPlay && isSpinning)
+        {
+            if (Input.GetKeyDown(KeyCode.Alpha1)) MakeMove(Move.Rock);
+            if (Input.GetKeyDown(KeyCode.Alpha2)) MakeMove(Move.Paper);
+            if (Input.GetKeyDown(KeyCode.Alpha3)) MakeMove(Move.Scissors);
+
+        }
+        
+
+        if (isSpinning)
+        {
+            spinTimer += Time.deltaTime;
+            if (spinTimer >= spinSpeed)
+            {
+                spinTimer = 0f;
+
+                int playerIndex = Random.Range(0, gestureSprites.Length);
+                int aiIndex = Random.Range(0, gestureSprites.Length);
+
+                playerSpinDisplay.sprite = gestureSprites[playerIndex];
+                aiSpinDisplay.sprite = gestureSprites[aiIndex];
+            }
+        }
+
     }
 
     void MakeMove(Move move)
     {
+        canPlay = false;
+        isSpinning = false;
+        playerSpinDisplay.gameObject.SetActive(false);
+        aiSpinDisplay.gameObject.SetActive(false);
+
         playerMove = move;
         aiMove = (Move)Random.Range(0, 3);
 
@@ -37,6 +86,10 @@ public class GameManager : MonoBehaviour
         playerChoiceText.text = $"You chose: {move}";
         resultText.text = $"Result: {GetResult()}";
         ShowSprites();
+
+        playAgainButton.SetActive(true);
+
+
     }
 
     string GetResult()
@@ -80,5 +133,40 @@ public class GameManager : MonoBehaviour
             case Move.Scissors: aiScissorsImage.SetActive(true); break;
         }
     }
+
+    void HideAllSprites()
+    {
+        playerRockImage.SetActive(false);
+        playerPaperImage.SetActive(false);
+        playerScissorsImage.SetActive(false);
+        aiRockImage.SetActive(false);
+        aiPaperImage.SetActive(false);
+        aiScissorsImage.SetActive(false);
+    }
+
+    
+
+    public void ResetGame()
+    {
+        canPlay = true;
+        isSpinning = true;
+        spinTimer = 0f;
+
+        // Hide previous result texts
+        resultText.text = "Press 1 - Rock, 2 - Paper, or 3 - Scissors to play";
+        aiChoiceText.text = "AI Choice:";
+        playerChoiceText.text = "Your Choice:";
+
+        // Hide all gesture visuals
+        HideAllSprites();
+
+        // Show spin displays
+        playerSpinDisplay.gameObject.SetActive(true);
+        aiSpinDisplay.gameObject.SetActive(true);
+
+        // Hide the Play Again button
+        playAgainButton.SetActive(false);
+    }
+
 
 }
